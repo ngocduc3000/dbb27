@@ -66,3 +66,15 @@ def compute_checksum(payload: bytes) -> str:
     """
     total = sum(payload) & 0xFF
     return format(total, "02x")
+
+
+def decode_value(field: Field, raw: str):
+    if field.kind == "decimal5":
+        return float(raw)
+    if field.kind == "flag1":
+        return raw == "1"
+    if field.kind == "bptime":
+        return raw
+    if field.kind == "unused":
+        return None
+    raise ValueError(f"unknown field kind: {field.kind}")
