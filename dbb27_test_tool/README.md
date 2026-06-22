@@ -14,11 +14,18 @@ pip install -r requirements.txt
 
 ## Chạy
 
+**Cách 1 — Tự khởi động (khuyên dùng):** bấm đúp **`start.bat`**.
+Lần đầu nó tự tạo `.venv` + cài thư viện, sau đó chạy server và tự mở trình duyệt tới http://localhost:8000.
+(PowerShell: chuột phải `start.ps1` → Run with PowerShell.)
+
+**Cách 2 — Thủ công:**
 ```
 uvicorn backend.server:app --reload --port 8000
 ```
-
 Mở http://localhost:8000
+
+### Tự chạy mỗi khi bật máy (tùy chọn)
+Nhấn `Win + R`, gõ `shell:startup`, Enter → tạo shortcut trỏ tới `start.bat` trong thư mục vừa mở. Windows sẽ tự chạy server khi đăng nhập.
 
 - **Mock**: chọn Nguồn = Mock, chọn scenario, bấm Kết nối.
 - **Serial thật**: cắm adapter USB↔RS232, chọn Nguồn = Serial, chọn COM port, Baud 9600, Kết nối.
