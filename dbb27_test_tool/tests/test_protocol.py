@@ -17,3 +17,14 @@ def test_registry_lookup_by_id():
     assert protocol.FIELDS_BY_ID["f"].key == "alarm_air"
     assert protocol.FIELDS_BY_ID["f"].kind == "flag1"
     assert protocol.FIELDS_BY_ID["N"].key == "treatment_mode"
+
+
+def test_checksum_low_byte_two_hex_lowercase():
+    # bytes summing to 0x5a -> "5a"
+    payload = bytes([0x30, 0x2a])  # 48 + 42 = 90 = 0x5a
+    assert protocol.compute_checksum(payload) == "5a"
+
+
+def test_checksum_wraps_at_256():
+    payload = bytes([0xff, 0x02])  # 257 & 0xff = 1 -> "01"
+    assert protocol.compute_checksum(payload) == "01"

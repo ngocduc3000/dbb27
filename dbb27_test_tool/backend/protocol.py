@@ -56,3 +56,13 @@ FIELDS_BY_ID: dict[str, Field] = {f.id: f for f in FIELD_REGISTRY}
 def build_command() -> bytes:
     """Command sent PC -> machine: ASCII 'K', CR, LF."""
     return b"K\r\n"
+
+
+def compute_checksum(payload: bytes) -> str:
+    """Sum of all byte values in payload (STX+LEN+RES-DATA), low byte as 2 lowercase hex chars.
+
+    Working interpretation of the doc's SUM rule; the tool displays received vs
+    computed so a real-machine mismatch is visible and this can be adjusted.
+    """
+    total = sum(payload) & 0xFF
+    return format(total, "02x")
