@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>DBB-27 Serial Test Tool</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; background:#0f172a; color:#e2e8f0; }
+  header { background:#1e293b; padding:10px 16px; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  main { display:grid; grid-template-columns:2fr 1fr; gap:12px; padding:12px; }
+  .card { background:#1e293b; border-radius:8px; padding:12px; }
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .metric { background:#0b1220; border-radius:6px; padding:8px; }
+  .metric .v { font-size:1.4em; font-weight:700; }
+  .metric.alarm { outline:2px solid #ef4444; }
+  .alarms { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .alarm-led { display:flex; align-items:center; gap:6px; }
+  .dot { width:12px; height:12px; border-radius:50%; background:#64748b; display:inline-block; }
+  .dot.err { background:#ef4444; box-shadow:0 0 6px #ef4444; }
+  .raw { font-family:monospace; font-size:12px; word-break:break-all; background:#0b1220; padding:8px; border-radius:6px; }
+  select, input { padding:6px 10px; border-radius:6px; border:1px solid #334155; background:#0b1220; color:#e2e8f0; }
+  #log { font-family:monospace; font-size:12px; height:140px; overflow:auto; background:#0b1220; padding:8px; border-radius:6px; }
+  .ok { color:#22c55e; } .bad { color:#ef4444; }
+
+  /* Status badge */
+  .status { padding:5px 12px; border-radius:999px; font-weight:700; font-size:13px; white-space:nowrap; }
+  .status.off { background:#334155; color:#cbd5e1; }
+  .status.on  { background:#14532d; color:#86efac; }
+  .status.err { background:#7f1d1d; color:#fecaca; }
+
+  /* Buttons with clear states */
+  .btn { cursor:pointer; padding:7px 14px; border-radius:6px; border:1px solid #334155; background:#0b1220; color:#e2e8f0; font-weight:600; }
+  .btn-primary { background:#16a34a; border-color:#16a34a; color:#fff; }
+  .btn-danger  { background:#dc2626; border-color:#dc2626; color:#fff; }
+  .btn:disabled { opacity:.35; cursor:not-allowed; filter:grayscale(.4); }
+  .btn:not(:disabled):hover { filter:brightness(1.1); }
+
+  /* Error banner */
+  #banner { display:none; margin:10px 12px 0; padding:12px 14px; border-radius:8px;
+            background:#7f1d1d; color:#fecaca; font-weight:700; border:1px solid #ef4444; }
+
+  /* Alarm toggle chips */
+  #alarm-panel { margin:10px 12px 0; }
+  .chips { display:inline-flex; gap:8px; flex-wrap:wrap; margin-left:8px; }
+  .chip { display:inline-flex; align-items:center; gap:7px; padding:5px 11px; border-radius:999px;
+          border:1px solid #334155; background:#0b1220; cursor:pointer; user-select:none; font-size:13px; }
+  .chip:hover { border-color:#64748b; }
+  .chip.on { background:#7f1d1d; border-color:#ef4444; color:#fee2e2; }
+  .chip .st { font-size:10px; font-weight:700; padding:1px 6px; border-radius:999px; background:#334155; color:#cbd5e1; }
+  .chip.on .st { background:#ef4444; color:#fff; }
+</style>
+</head>
+<body>
+<header>
+  <strong>DBB-27 Serial Test Tool</strong>
+  <span id="status" class="status off">○ Chưa kết nối</span>
+  <label>Nguồn:
+    <select id="source"><option value="mock">Mock</option><option value="serial">Serial</option></select>
+  </label>
+  <label id="lblPort">COM: <select id="port"></select></label>
+  <label id="lblBaud">Baud: <input id="baud" value="9600" size="6"></label>
+  <label>Poll(ms): <input id="poll" value="1000" size="6"></label>
+  <label id="lblScenario">Scenario: <select id="scenario"></select></label>
+  <button id="connect" class="btn btn-primary">▶ Kết nối</button>
+  <button id="disconnect" class="btn btn-danger" disabled>■ Ngắt</button>
+  <a href="/api/log/download"><button class="btn">⬇ Tải log</button></a>
+</header>
+
+<div id="banner"></div>
+
+<div class="card" id="alarm-panel">
+  <strong>Mô phỏng cảnh báo (chỉ chế độ Mock):</strong>
+  <span id="alarm-toggles" class="chips"></span>
+  <button id="apply-alarms" class="btn" style="margin-left:10px;">Áp dụng</button>
+</div>
+
+<main>
+  <section class="card">
+    <h3>Thông số đo</h3>
+    <div id="metrics" class="grid"></div>
+    <h3>Raw frame (debug)</h3>
+    <div id="raw" class="raw">—</div>
+    <div id="frameinfo"></div>
+    <h3>Log</h3>
+    <div id="log"></div>
+  </section>
+  <section class="card">
+    <h3>Cảnh báo</h3>
+    <div id="alarms" class="alarms"></div>
+    <h3>Huyết áp</h3>
+    <div id="bp" class="metric">—</div>
+    <h3>Trạng thái điều trị</h3>
+    <div id="treat" class="metric">—</div>
+  </section>
+</main>
+
+<script>
+const METRICS = [
+  ["uf_goal","UF goal","L"],["uf_volume","UF volume","L"],["uf_rate","UF rate","L/hr"],
+  ["blood_pump_flow","Bơm máu","mL/min"],["heparin_rate","Heparin","mL/hr"],["dialysate_temp","Nhiệt độ dịch","°C"],
+  ["conductivity","Độ dẫn điện","mS/cm"],["venous_pressure","Áp lực TM","mmHg"],["dialysate_pressure","Áp lực dịch","mmHg"],
+  ["tmp","TMP","mmHg"],["treatment_time","Thời gian","min"],["dialysate_flow","Lưu lượng dịch","mL/min"],
+];
+const ALARMS = [
+  ["alarm_dialysate_temp","Nhiệt độ dịch"],["alarm_conductivity","Độ dẫn điện"],["alarm_venous_pressure","Áp lực TM"],
+  ["alarm_dialysate_pressure","Áp lực dịch"],["alarm_tmp","TMP"],["alarm_air","Khí"],
+  ["alarm_blood_leak","Rò máu"],["alarm_other","Khác"],["alarm_bp","Huyết áp"],
+];
+const ALARM_FOR = {venous_pressure:"alarm_venous_pressure", dialysate_pressure:"alarm_dialysate_pressure",
+  dialysate_temp:"alarm_dialysate_temp", conductivity:"alarm_conductivity", tmp:"alarm_tmp"};
+
+let connected = false;
+function el(id){return document.getElementById(id);}
+
+async function init(){
+  const sc = await (await fetch("/api/scenarios")).json();
+  el("scenario").innerHTML = sc.scenarios.map(s=>`<option>${s}</option>`).join("");
+  const pr = await (await fetch("/api/ports")).json();
+  el("port").innerHTML = pr.ports.map(p=>`<option>${p}</option>`).join("") || "<option value=''>(không thấy cổng)</option>";
+  el("metrics").innerHTML = METRICS.map(([k])=>`<div class="metric" id="m_${k}"></div>`).join("");
+  el("alarms").innerHTML = ALARMS.map(([k,n])=>`<div class="alarm-led"><span class="dot" id="a_${k}"></span>${n}</div>`).join("");
+  el("alarm-toggles").innerHTML = ALARMS.map(([k,n])=>
+    `<span class="chip" data-key="${k}" onclick="toggleChip(this)">${n}<span class="st">TẮT</span></span>`).join("");
+  applySourceUI();
+  setConnected(false);
+  resetReadouts();
+}
+
+window.toggleChip = function(chip){
+  chip.classList.toggle("on");
+  chip.querySelector(".st").textContent = chip.classList.contains("on") ? "BẬT" : "TẮT";
+};
+function selectedAlarms(){
+  return Array.from(document.querySelectorAll(".chip.on")).map(c=>c.dataset.key);
+}
+
+function setConnected(state, source){
+  connected = state;
+  el("connect").disabled = state;
+  el("disconnect").disabled = !state;
+  if(!state){
+    el("status").className = "status off";
+    el("status").textContent = "○ Chưa kết nối";
+  } else {
+    el("status").className = "status on";
+    el("status").textContent = `● Đã kết nối · ${source||el("source").value}`;
+  }
+}
+
+function applySourceUI(){
+  const mock = el("source").value === "mock";
+  el("alarm-panel").style.display = mock ? "" : "none";
+  el("lblScenario").style.display = mock ? "" : "none";
+  el("lblPort").style.display = mock ? "none" : "";
+  el("lblBaud").style.display = mock ? "none" : "";
+}
+
+function resetReadouts(){
+  for(const [k,name,unit] of METRICS){
+    const m = el("m_"+k); if(m){ m.className="metric"; m.innerHTML = `${name}<div class="v">— ${unit}</div>`; }
+  }
+  for(const [k] of ALARMS){ const d=el("a_"+k); if(d) d.className="dot"; }
+  el("bp").textContent = "—";
+  el("treat").textContent = "—";
+  el("raw").textContent = "—";
+  el("frameinfo").textContent = "";
+}
+
+function showBanner(msg){ el("banner").style.display="block"; el("banner").textContent = "⚠ " + msg; }
+function hideBanner(){ el("banner").style.display="none"; }
+
+function render(r){
+  // Ignore any data while this page is not connected (e.g. a leftover server
+  // session, or frames still in flight right after pressing Ngắt).
+  if(!connected) return;
+
+  const d = r.decoded || {};
+  const noFrame = !r.ok && !r.raw_hex;   // open failure or no data received
+  if(noFrame){
+    showBanner(r.error || "Lỗi kết nối");
+    el("status").className = "status err";
+    el("status").textContent = `✖ ${r.source} · ` + (r.connection_error ? "LỖI KẾT NỐI" : "KHÔNG CÓ DỮ LIỆU");
+  } else if(r.ok){
+    hideBanner();
+    el("status").className = "status on";
+    el("status").textContent = `● Đã kết nối · ${r.source} · OK`;
+  } else {
+    // a frame arrived but failed to decode (bad checksum / unknown id / ...)
+    el("status").className = "status err";
+    el("status").textContent = `● ${r.source} · FRAME LỖI`;
+  }
+
+  for(const [k,name,unit] of METRICS){
+    const m = el("m_"+k); if(!m) continue;
+    const alarmed = ALARM_FOR[k] && d[ALARM_FOR[k]] === true;
+    m.className = "metric" + (alarmed ? " alarm" : "");
+    const v = d[k]; m.innerHTML = `${name}<div class="v">${v===undefined?"—":v} ${unit}</div>`;
+  }
+  for(const [k] of ALARMS){
+    const led = el("a_"+k); if(led) led.className = "dot " + (d[k]===true ? "err" : "");
+  }
+  el("bp").innerHTML = `Giờ: ${d.bp_time??"—"} · ${d.bp_systolic??"—"}/${d.bp_diastolic??"—"} mmHg · Mạch ${d.bp_pulse??"—"}`;
+  el("treat").innerHTML = `Chế độ: ${d.treatment_mode?"ECUM":"HD"} · Đang điều trị: ${d.under_treatment?"✔":"—"}`;
+  el("raw").textContent = r.raw_hex || "—";
+  el("frameinfo").innerHTML =
+    `Checksum: <span class="${r.checksum_recv===r.checksum_calc?'ok':'bad'}">nhận ${r.checksum_recv} / tính ${r.checksum_calc}</span> · ` +
+    `LEN: ${r.len_recv} (thực ${r.len_calc}) · Trường: ${r.field_count}/31 · ` +
+    `Tổng ${r.frames_total} · <span class="bad">Lỗi ${r.frames_error}</span>`;
+  const line = document.createElement("div");
+  line.className = r.ok ? "ok" : "bad";
+  line.textContent = `${r.ts} ${r.ok?"OK":"✖ "+(r.error||"")}`;
+  el("log").prepend(line);
+}
+
+let ws;
+function openWs(){
+  ws = new WebSocket(`ws://${location.host}/ws`);
+  ws.onmessage = e => render(JSON.parse(e.data));
+  ws.onclose = () => setTimeout(openWs, 1000);
+  ws.onopen = () => ws.send("hi");
+}
+
+async function doConnect(){
+  hideBanner();
+  resetReadouts();
+  try{
+    const res = await fetch("/api/connect", {method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        source: el("source").value, port: el("port").value, baud: Number(el("baud").value),
+        poll_ms: Number(el("poll").value), scenario: el("scenario").value,
+        alarms: selectedAlarms()
+      })});
+    if(!res.ok){ showBanner("Yêu cầu kết nối thất bại (HTTP "+res.status+")"); return; }
+    setConnected(true);
+  }catch(err){ showBanner("Không gọi được API kết nối: "+err); }
+}
+
+async function doDisconnect(){
+  await fetch("/api/disconnect", {method:"POST"});
+  setConnected(false);
+}
+
+el("connect").onclick = doConnect;
+el("apply-alarms").onclick = () => { if(connected) doConnect(); };   // reconnect with current alarm chips
+el("disconnect").onclick = doDisconnect;
+
+el("source").onchange = async () => {
+  // switching source resets the mock readouts and disconnects any running session
+  await fetch("/api/disconnect", {method:"POST"});
+  setConnected(false);
+  resetReadouts();
+  hideBanner();
+  applySourceUI();
+};
+
+// On page load: stop any leftover server session so a fresh page = not measuring.
+(async () => {
+  try { await fetch("/api/disconnect", {method:"POST"}); } catch(e) {}
+  await init();
+  openWs();
+})();
+</script>
+</body>
+</html>
