@@ -30,6 +30,10 @@ class FrameLogger:
             "decoded": d["decoded"],
             "error": "; ".join(d["errors"]) if d["errors"] else None,
         }
+        self.write_record(record)
+        return record
+
+    def write_record(self, record: dict) -> None:
+        """Append an already-built record dict (e.g. connection / no-data errors)."""
         with open(self.current_path(), "a", encoding="utf-8") as fh:
             fh.write(json.dumps(record, ensure_ascii=False) + "\n")
-        return record

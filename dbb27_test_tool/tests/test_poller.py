@@ -41,3 +41,26 @@ def test_poller_emits_error_when_open_fails(tmp_path):
     assert rec["ok"] is False
     assert rec["connection_error"] is True
     assert "COM không tồn tại" in rec["error"]
+
+
+class _SilentTransport(transport.Transport):
+    """Opens fine but never returns data (simulates wrong device / dead line)."""
+    def read_frame(self, timeout: float) -> bytes:
+        return b""
+
+
+def test_poller_reports_no_data(tmp_path):
+    results = []
+    lg = logger.FrameLogger(str(tmp_path))
+    p = poller.Poller(_SilentTransport(), lg, source="serial", on_result=results.append, poll_ms=10)
+
+    async def drive():
+        task = asyncio.create_task(p.run())
+        await asyncio.sleep(0.08)
+        p.stop()
+        await task
+
+    asyncio.run(drive())
+    assert len(results) >= 1
+    assert all(r["ok"] is False for r in results)
+    assert "Không nhận được dữ liệu" in results[0]["error"]

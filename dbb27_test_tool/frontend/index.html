@@ -169,17 +169,22 @@ function showBanner(msg){ el("banner").style.display="block"; el("banner").textC
 function hideBanner(){ el("banner").style.display="none"; }
 
 function render(r){
+  // Ignore any data while this page is not connected (e.g. a leftover server
+  // session, or frames still in flight right after pressing Ngắt).
+  if(!connected) return;
+
   const d = r.decoded || {};
-  // connection-level error (no frame): prominent banner + err status
-  if(r.connection_error){
+  const noFrame = !r.ok && !r.raw_hex;   // open failure or no data received
+  if(noFrame){
     showBanner(r.error || "Lỗi kết nối");
     el("status").className = "status err";
-    el("status").textContent = `✖ ${r.source} · LỖI KẾT NỐI`;
+    el("status").textContent = `✖ ${r.source} · ` + (r.connection_error ? "LỖI KẾT NỐI" : "KHÔNG CÓ DỮ LIỆU");
   } else if(r.ok){
     hideBanner();
     el("status").className = "status on";
     el("status").textContent = `● Đã kết nối · ${r.source} · OK`;
   } else {
+    // a frame arrived but failed to decode (bad checksum / unknown id / ...)
     el("status").className = "status err";
     el("status").textContent = `● ${r.source} · FRAME LỖI`;
   }
@@ -247,7 +252,12 @@ el("source").onchange = async () => {
   applySourceUI();
 };
 
-init(); openWs();
+// On page load: stop any leftover server session so a fresh page = not measuring.
+(async () => {
+  try { await fetch("/api/disconnect", {method:"POST"}); } catch(e) {}
+  await init();
+  openWs();
+})();
 </script>
 </body>
 </html>
