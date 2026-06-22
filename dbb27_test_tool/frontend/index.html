@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>DBB-27 Serial Test Tool</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; background:#0f172a; color:#e2e8f0; }
+  header { background:#1e293b; padding:10px 16px; display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  .dot { width:12px; height:12px; border-radius:50%; background:#64748b; display:inline-block; }
+  .dot.on { background:#22c55e; } .dot.err { background:#ef4444; }
+  main { display:grid; grid-template-columns:2fr 1fr; gap:12px; padding:12px; }
+  .card { background:#1e293b; border-radius:8px; padding:12px; }
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .metric { background:#0b1220; border-radius:6px; padding:8px; }
+  .metric .v { font-size:1.4em; font-weight:700; }
+  .metric.alarm { outline:2px solid #ef4444; }
+  .alarms { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .alarm-led { display:flex; align-items:center; gap:6px; }
+  .raw { font-family:monospace; font-size:12px; word-break:break-all; background:#0b1220; padding:8px; border-radius:6px; }
+  button, select, input { padding:6px 10px; border-radius:6px; border:1px solid #334155; background:#0b1220; color:#e2e8f0; }
+  #log { font-family:monospace; font-size:12px; height:140px; overflow:auto; background:#0b1220; padding:8px; border-radius:6px; }
+  .ok { color:#22c55e; } .bad { color:#ef4444; }
+</style>
+</head>
+<body>
+<header>
+  <strong>DBB-27 Serial Test Tool</strong>
+  <span><span id="status-dot" class="dot"></span> <span id="status-text">Chưa kết nối</span></span>
+  <label>Nguồn:
+    <select id="source"><option value="mock">Mock</option><option value="serial">Serial</option></select>
+  </label>
+  <label>COM: <select id="port"></select></label>
+  <label>Baud: <input id="baud" value="9600" size="6"></label>
+  <label>Poll(ms): <input id="poll" value="1000" size="6"></label>
+  <label>Scenario: <select id="scenario"></select></label>
+  <button id="connect">▶ Kết nối</button>
+  <button id="disconnect">■ Ngắt</button>
+  <a href="/api/log/download"><button>⬇ Tải log</button></a>
+</header>
+<main>
+  <section class="card">
+    <h3>Thông số đo</h3>
+    <div id="metrics" class="grid"></div>
+    <h3>Raw frame (debug)</h3>
+    <div id="raw" class="raw">—</div>
+    <div id="frameinfo"></div>
+    <h3>Log</h3>
+    <div id="log"></div>
+  </section>
+  <section class="card">
+    <h3>Cảnh báo</h3>
+    <div id="alarms" class="alarms"></div>
+    <h3>Huyết áp</h3>
+    <div id="bp" class="metric">—</div>
+    <h3>Trạng thái điều trị</h3>
+    <div id="treat" class="metric">—</div>
+  </section>
+</main>
+<script>
+const METRICS = [
+  ["uf_goal","UF goal","L"],["uf_volume","UF volume","L"],["uf_rate","UF rate","L/hr"],
+  ["blood_pump_flow","Bơm máu","mL/min"],["heparin_rate","Heparin","mL/hr"],["dialysate_temp","Nhiệt độ dịch","°C"],
+  ["conductivity","Độ dẫn điện","mS/cm"],["venous_pressure","Áp lực TM","mmHg"],["dialysate_pressure","Áp lực dịch","mmHg"],
+  ["tmp","TMP","mmHg"],["treatment_time","Thời gian","min"],["dialysate_flow","Lưu lượng dịch","mL/min"],
+];
+const ALARMS = [
+  ["alarm_dialysate_temp","Nhiệt độ dịch"],["alarm_conductivity","Độ dẫn điện"],["alarm_venous_pressure","Áp lực TM"],
+  ["alarm_dialysate_pressure","Áp lực dịch"],["alarm_tmp","TMP"],["alarm_air","Khí"],
+  ["alarm_blood_leak","Rò máu"],["alarm_other","Khác"],["alarm_bp","Huyết áp"],
+];
+const ALARM_FOR = {venous_pressure:"alarm_venous_pressure", dialysate_pressure:"alarm_dialysate_pressure",
+  dialysate_temp:"alarm_dialysate_temp", conductivity:"alarm_conductivity", tmp:"alarm_tmp"};
+
+function el(id){return document.getElementById(id);}
+
+async function init(){
+  const sc = await (await fetch("/api/scenarios")).json();
+  el("scenario").innerHTML = sc.scenarios.map(s=>`<option>${s}</option>`).join("");
+  const pr = await (await fetch("/api/ports")).json();
+  el("port").innerHTML = pr.ports.map(p=>`<option>${p}</option>`).join("") || "<option>(none)</option>";
+  el("metrics").innerHTML = METRICS.map(([k])=>`<div class="metric" id="m_${k}"></div>`).join("");
+  el("alarms").innerHTML = ALARMS.map(([k,n])=>`<div class="alarm-led"><span class="dot" id="a_${k}"></span>${n}</div>`).join("");
+}
+
+function render(r){
+  el("status-dot").className = "dot " + (r.ok ? "on" : "err");
+  el("status-text").textContent = `${r.source} · ${r.ok?"OK":"LỖI"}`;
+  const d = r.decoded || {};
+  for(const [k,name,unit] of METRICS){
+    const m = el("m_"+k); if(!m) continue;
+    const alarmed = ALARM_FOR[k] && d[ALARM_FOR[k]] === true;
+    m.className = "metric" + (alarmed ? " alarm" : "");
+    const v = d[k]; m.innerHTML = `${name}<div class="v">${v===undefined?"—":v} ${unit}</div>`;
+  }
+  for(const [k] of ALARMS){
+    const led = el("a_"+k); if(led) led.className = "dot " + (d[k]===true ? "err" : "");
+  }
+  el("bp").innerHTML = `Giờ: ${d.bp_time??"—"} · ${d.bp_systolic??"—"}/${d.bp_diastolic??"—"} mmHg · Mạch ${d.bp_pulse??"—"}`;
+  el("treat").innerHTML = `Chế độ: ${d.treatment_mode?"ECUM":"HD"} · Đang điều trị: ${d.under_treatment?"✔":"—"}`;
+  el("raw").textContent = r.raw_hex || "—";
+  el("frameinfo").innerHTML =
+    `Checksum: <span class="${r.checksum_recv===r.checksum_calc?'ok':'bad'}">nhận ${r.checksum_recv} / tính ${r.checksum_calc}</span> · ` +
+    `LEN: ${r.len_recv} (thực ${r.len_calc}) · Trường: ${r.field_count}/31 · ` +
+    `Tổng ${r.frames_total} · <span class="bad">Lỗi ${r.frames_error}</span>`;
+  const line = document.createElement("div");
+  line.className = r.ok ? "ok" : "bad";
+  line.textContent = `${r.ts} ${r.ok?"OK":"✖ "+(r.error||"")}`;
+  el("log").prepend(line);
+}
+
+let ws;
+function openWs(){
+  ws = new WebSocket(`ws://${location.host}/ws`);
+  ws.onmessage = e => render(JSON.parse(e.data));
+  ws.onclose = () => setTimeout(openWs, 1000);
+  ws.onopen = () => ws.send("hi");
+}
+
+el("connect").onclick = async () => {
+  await fetch("/api/connect", {method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      source: el("source").value, port: el("port").value, baud: Number(el("baud").value),
+      poll_ms: Number(el("poll").value), scenario: el("scenario").value
+    })});
+};
+el("disconnect").onclick = () => fetch("/api/disconnect", {method:"POST"});
+
+init(); openWs();
+</script>
+</body>
+</html>
