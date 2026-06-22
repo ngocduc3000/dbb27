@@ -48,7 +48,11 @@ async def connect(cfg: dict):
     if source == "serial":
         t = transport.SerialTransport(cfg["port"], int(cfg.get("baud", 9600)))
     else:
-        t = transport.MockTransport(cfg.get("scenario", "normal"), float(cfg.get("fault_rate", 0.0)))
+        t = transport.MockTransport(
+            cfg.get("scenario", "normal"),
+            float(cfg.get("fault_rate", 0.0)),
+            alarms=cfg.get("alarms", []),
+        )
     lg = logger_mod.FrameLogger(LOG_DIR)
     _poller = poller.Poller(
         t, lg, source=source, on_result=_broadcast,

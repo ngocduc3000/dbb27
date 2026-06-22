@@ -12,13 +12,15 @@ class Transport:
 
 
 class MockTransport(Transport):
-    def __init__(self, scenario: str = "normal", fault_rate: float = 0.0):
+    def __init__(self, scenario: str = "normal", fault_rate: float = 0.0,
+                 alarms: list[str] | None = None):
         self.scenario = scenario
         self.fault_rate = fault_rate
+        self.alarms = alarms or []
 
     def read_frame(self, timeout: float) -> bytes:
         inject = random.random() < self.fault_rate
-        return mock.generate_frame(self.scenario, inject_fault=inject)
+        return mock.generate_frame(self.scenario, inject_fault=inject, alarms=self.alarms)
 
 
 class SerialTransport(Transport):

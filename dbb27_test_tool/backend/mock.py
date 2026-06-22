@@ -4,6 +4,11 @@ from backend import protocol
 
 SCENARIOS = ["normal", "treatment_hd", "treatment_ecum", "alarm", "bp_measure", "bad_frame"]
 
+# decoded-key -> id char, for every alarm flag (9 total). Lets the UI toggle
+# each alarm individually.
+ALARM_IDS = {f.key: f.id for f in protocol.FIELD_REGISTRY
+             if f.kind == "flag1" and f.key.startswith("alarm_")}
+
 
 def encode_decimal5(value: float, decimals: int) -> str:
     """Format value into exactly 5 chars; negative uses a leading '-'."""
@@ -14,7 +19,7 @@ def encode_decimal5(value: float, decimals: int) -> str:
     return ("-" + s) if neg else s
 
 
-def _field_values(scenario: str) -> dict[str, str]:
+def _field_values(scenario: str, alarms: list[str] | None = None) -> dict[str, str]:
     """Return {id_char: raw_value_string} for all 31 fields."""
     treating = scenario in ("treatment_hd", "treatment_ecum", "alarm", "bp_measure")
     venous = 120 + random.uniform(-10, 10)
@@ -46,11 +51,18 @@ def _field_values(scenario: str) -> dict[str, str]:
     if scenario == "alarm":
         raw["f"] = "1"  # air alarm
         raw["h"] = "1"  # other alarm
+
+    # explicitly requested alarms (from UI checkboxes) override to "1"
+    for key in (alarms or []):
+        fid = ALARM_IDS.get(key)
+        if fid is not None:
+            raw[fid] = "1"
     return raw
 
 
-def generate_frame(scenario: str = "normal", *, inject_fault: bool = False) -> bytes:
-    raw_values = _field_values(scenario)
+def generate_frame(scenario: str = "normal", *, inject_fault: bool = False,
+                   alarms: list[str] | None = None) -> bytes:
+    raw_values = _field_values(scenario, alarms)
     res = b"".join(
         (f.id + raw_values[f.id]).encode("ascii")
         for f in protocol.FIELD_REGISTRY

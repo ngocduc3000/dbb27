@@ -37,6 +37,12 @@
   <button id="disconnect">■ Ngắt</button>
   <a href="/api/log/download"><button>⬇ Tải log</button></a>
 </header>
+<div class="card" style="margin:0 12px;" id="alarm-panel">
+  <strong>Mô phỏng cảnh báo (Mock):</strong>
+  <span id="alarm-toggles" style="display:inline-flex; gap:14px; flex-wrap:wrap; margin-left:8px;"></span>
+  <em style="color:#94a3b8;"> — tích chọn rồi bấm "Kết nối" (hoặc "Áp dụng") để bật cờ alarm tương ứng.</em>
+  <button id="apply-alarms" style="margin-left:8px;">Áp dụng</button>
+</div>
 <main>
   <section class="card">
     <h3>Thông số đo</h3>
@@ -80,6 +86,12 @@ async function init(){
   el("port").innerHTML = pr.ports.map(p=>`<option>${p}</option>`).join("") || "<option>(none)</option>";
   el("metrics").innerHTML = METRICS.map(([k])=>`<div class="metric" id="m_${k}"></div>`).join("");
   el("alarms").innerHTML = ALARMS.map(([k,n])=>`<div class="alarm-led"><span class="dot" id="a_${k}"></span>${n}</div>`).join("");
+  el("alarm-toggles").innerHTML = ALARMS.map(([k,n])=>
+    `<label style="display:inline-flex; gap:4px; align-items:center;"><input type="checkbox" class="alarm-cb" value="${k}">${n}</label>`).join("");
+}
+
+function selectedAlarms(){
+  return Array.from(document.querySelectorAll(".alarm-cb")).filter(c=>c.checked).map(c=>c.value);
 }
 
 function render(r){
@@ -116,13 +128,16 @@ function openWs(){
   ws.onopen = () => ws.send("hi");
 }
 
-el("connect").onclick = async () => {
+async function doConnect(){
   await fetch("/api/connect", {method:"POST", headers:{"Content-Type":"application/json"},
     body: JSON.stringify({
       source: el("source").value, port: el("port").value, baud: Number(el("baud").value),
-      poll_ms: Number(el("poll").value), scenario: el("scenario").value
+      poll_ms: Number(el("poll").value), scenario: el("scenario").value,
+      alarms: selectedAlarms()
     })});
-};
+}
+el("connect").onclick = doConnect;
+el("apply-alarms").onclick = doConnect;   // reconnect with current alarm selections
 el("disconnect").onclick = () => fetch("/api/disconnect", {method:"POST"});
 
 init(); openWs();
