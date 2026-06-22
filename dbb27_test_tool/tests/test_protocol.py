@@ -54,3 +54,49 @@ def test_decode_unused_is_none():
 def test_decode_bptime_keeps_raw_string():
     f = protocol.FIELDS_BY_ID["S"]
     assert protocol.decode_value(f, "43205") == "43205"
+
+
+def _build_valid_frame() -> bytes:
+    # Minimal hand-built RES-DATA with two fields: A (uf_goal) and f (air alarm)
+    res = b"A02.35" + b"f1"
+    length = f"{len(res):03d}".encode("ascii")
+    payload = protocol.STX + length + res
+    checksum = protocol.compute_checksum(payload).encode("ascii")
+    return payload + checksum + protocol.ETX
+
+
+def test_parse_valid_partial_frame():
+    frame = _build_valid_frame()
+    p = protocol.parse_frame(frame)
+    assert p.ok is True
+    assert p.errors == []
+    assert p.decoded["uf_goal"] == 2.35
+    assert p.decoded["alarm_air"] is True
+    assert p.field_count == 2
+    assert p.checksum_recv == p.checksum_calc
+
+
+def test_parse_bad_checksum_flags_error_but_still_decodes():
+    frame = bytearray(_build_valid_frame())
+    # corrupt the first checksum char (second to last before CR LF)
+    frame[-4] = ord("0") if chr(frame[-4]) != "0" else ord("1")
+    p = protocol.parse_frame(bytes(frame))
+    assert p.ok is False
+    assert any("checksum" in e.lower() for e in p.errors)
+    assert p.decoded["uf_goal"] == 2.35  # still decoded
+
+
+def test_parse_missing_stx():
+    p = protocol.parse_frame(b"XX003A02.35..\r\n")
+    assert p.ok is False
+    assert any("stx" in e.lower() for e in p.errors)
+
+
+def test_parse_unknown_id_stops_and_flags():
+    res = b"Z12345"  # 'Z' not in registry
+    length = f"{len(res):03d}".encode("ascii")
+    payload = protocol.STX + length + res
+    frame = payload + protocol.compute_checksum(payload).encode("ascii") + protocol.ETX
+    p = protocol.parse_frame(frame)
+    assert p.ok is False
+    assert any("unknown id" in e.lower() for e in p.errors)

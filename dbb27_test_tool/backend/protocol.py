@@ -78,3 +78,97 @@ def decode_value(field: Field, raw: str):
     if field.kind == "unused":
         return None
     raise ValueError(f"unknown field kind: {field.kind}")
+
+
+@dataclass
+class ParsedFrame:
+    raw_hex: str
+    len_recv: int | None
+    len_calc: int
+    checksum_recv: str | None
+    checksum_calc: str | None
+    ok: bool
+    field_count: int
+    decoded: dict
+    errors: list
+
+
+def parse_frame(raw: bytes) -> ParsedFrame:
+    errors: list[str] = []
+    decoded: dict = {}
+    field_count = 0
+    len_recv: int | None = None
+    checksum_recv: str | None = None
+    checksum_calc: str | None = None
+
+    raw_hex = raw.hex(" ")
+
+    if not raw.startswith(STX):
+        errors.append("Sai STX (không bắt đầu bằng 'K2')")
+        return ParsedFrame(raw_hex, None, 0, None, None, False, 0, {}, errors)
+
+    if not raw.endswith(ETX):
+        errors.append("Thiếu ETX (CR LF) ở cuối khung")
+
+    body = raw[:-2] if raw.endswith(ETX) else raw  # strip CR LF for indexing
+
+    # LEN = 3 ascii digits after STX
+    try:
+        len_recv = int(body[2:5].decode("ascii"))
+    except (ValueError, UnicodeDecodeError):
+        errors.append("LEN không hợp lệ (3 chữ số)")
+        return ParsedFrame(raw_hex, None, 0, None, None, False, 0, {}, errors)
+
+    res_start = 5
+    res_end = res_start + len_recv
+    res_data = body[res_start:res_end]
+    if len(res_data) != len_recv:
+        errors.append(
+            f"Độ dài RES-DATA thực ({len(res_data)}) khác LEN ({len_recv})"
+        )
+
+    sum_bytes = body[res_end:res_end + 2]
+    if len(sum_bytes) == 2:
+        checksum_recv = sum_bytes.decode("ascii", errors="replace")
+    else:
+        errors.append("Thiếu SUM (checksum) 2 byte")
+
+    payload = body[:res_end]  # STX + LEN + RES-DATA
+    checksum_calc = compute_checksum(payload)
+    if checksum_recv is not None and checksum_recv.lower() != checksum_calc:
+        errors.append(
+            f"Sai checksum: nhận {checksum_recv} / tính {checksum_calc}"
+        )
+
+    # Walk RES-DATA by id
+    i = 0
+    while i < len(res_data):
+        id_char = chr(res_data[i])
+        field = FIELDS_BY_ID.get(id_char)
+        if field is None:
+            errors.append(f"Unknown ID '{id_char}' tại vị trí {i}")
+            break
+        value_bytes = res_data[i + 1:i + 1 + field.size]
+        if len(value_bytes) != field.size:
+            errors.append(f"Trường '{id_char}' thiếu byte dữ liệu")
+            break
+        raw_value = value_bytes.decode("ascii", errors="replace")
+        try:
+            decoded[field.key] = decode_value(field, raw_value)
+        except ValueError as exc:
+            errors.append(f"Trường '{id_char}' giải mã lỗi: {exc}")
+            decoded[field.key] = None
+        field_count += 1
+        i += 1 + field.size
+
+    return ParsedFrame(
+        raw_hex=raw_hex,
+        len_recv=len_recv,
+        len_calc=len(res_data),
+        checksum_recv=checksum_recv,
+        checksum_calc=checksum_calc,
+        ok=len(errors) == 0,
+        field_count=field_count,
+        decoded=decoded,
+        errors=errors,
+    )
