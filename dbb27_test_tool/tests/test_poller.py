@@ -19,3 +19,25 @@ def test_poller_emits_results_and_counts(tmp_path):
     assert p.frames_total >= 2
     assert len(results) == p.frames_total
     assert results[0]["ok"] is True
+
+
+class _BoomTransport(transport.Transport):
+    def open(self):
+        raise RuntimeError("COM không tồn tại")
+
+    def close(self):
+        pass
+
+
+def test_poller_emits_error_when_open_fails(tmp_path):
+    results = []
+    lg = logger.FrameLogger(str(tmp_path))
+    p = poller.Poller(_BoomTransport(), lg, source="serial", on_result=results.append, poll_ms=10)
+
+    asyncio.run(p.run())
+
+    assert len(results) == 1
+    rec = results[0]
+    assert rec["ok"] is False
+    assert rec["connection_error"] is True
+    assert "COM không tồn tại" in rec["error"]

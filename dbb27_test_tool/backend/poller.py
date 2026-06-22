@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 
 from backend import protocol
 
@@ -18,9 +19,27 @@ class Poller:
     def stop(self) -> None:
         self._running = False
 
+    def _connection_error(self, message: str) -> dict:
+        """Build a UI record for a connection-level failure (no frame received)."""
+        self.frames_total += 1
+        self.frames_error += 1
+        return {
+            "ts": datetime.now().isoformat(timespec="milliseconds"),
+            "source": self.source, "raw_hex": "", "len_recv": None, "len_calc": 0,
+            "checksum_recv": None, "checksum_calc": None, "ok": False,
+            "field_count": 0, "decoded": {}, "error": message,
+            "frames_total": self.frames_total, "frames_error": self.frames_error,
+            "connection_error": True,
+        }
+
     async def run(self) -> None:
         self._running = True
-        self.transport.open()
+        try:
+            self.transport.open()
+        except Exception as exc:  # noqa: BLE001 - report any open failure to the UI
+            self.on_result(self._connection_error(f"Không mở được kết nối: {exc}"))
+            self._running = False
+            return
         try:
             while self._running:
                 raw = await self._read_with_retry()
