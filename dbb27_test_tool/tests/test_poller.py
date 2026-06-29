@@ -21,6 +21,26 @@ def test_poller_emits_results_and_counts(tmp_path):
     assert results[0]["ok"] is True
 
 
+def test_poller_stop_aborts_the_transport(tmp_path):
+    """stop() must signal the transport to abort any in-flight read, otherwise a
+    blocking read keeps a worker thread (and the COM port) alive after disconnect."""
+    class _AbortRecordingTransport(transport.Transport):
+        def __init__(self):
+            self.aborted = False
+
+        def read_frame(self, timeout: float) -> bytes:
+            return b""
+
+        def abort(self) -> None:
+            self.aborted = True
+
+    t = _AbortRecordingTransport()
+    lg = logger.FrameLogger(str(tmp_path))
+    p = poller.Poller(t, lg, source="serial", on_result=lambda r: None, poll_ms=10)
+    p.stop()
+    assert t.aborted is True
+
+
 class _BoomTransport(transport.Transport):
     def open(self):
         raise RuntimeError("COM không tồn tại")

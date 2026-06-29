@@ -44,8 +44,9 @@ PC RXD(2) ↔ máy TXD(3), PC TXD(3) ↔ máy RXD(2), GND(5) ↔ GND(5).
 ## Giao thức (tóm tắt)
 
 - PC gửi: `K` `CR` `LF`.
-- Máy trả: `K2` + LEN(3) + RES-DATA + SUM(2 hex) + CR LF.
+- Máy trả: `K` (STX) + LEN(3) + RES-DATA + SUM(2 hex) + `CR` `LF`.
 - 31 trường theo Table-2 (xem `backend/protocol.py`).
+- STX khai báo ở `protocol.STX`; parser đọc LEN ngay sau STX theo `len(STX)` nên đổi sang `K2` (nếu máy thật dùng vậy) là chạy luôn, không cần sửa chỗ khác.
 - **Điểm cần verify với máy thật:** cách tính checksum, định dạng treatment time, BP time — UI hiện raw + checksum nhận/tính để đối chiếu.
 
 ## Cấu trúc

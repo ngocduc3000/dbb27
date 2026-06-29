@@ -18,6 +18,9 @@ class Poller:
 
     def stop(self) -> None:
         self._running = False
+        # Unblock an in-flight read in the worker thread so run()'s finally can
+        # close the port without racing a still-running read.
+        self.transport.abort()
 
     def _status_record(self, message: str, *, connection_error: bool = False) -> dict:
         """Build a UI/log record for a non-frame condition (open failure or no data)."""
@@ -41,7 +44,9 @@ class Poller:
         try:
             self.transport.open()
         except Exception as exc:  # noqa: BLE001 - report any open failure to the UI
-            self._emit(self._status_record(f"Không mở được kết nối: {exc}", connection_error=True))
+            # SerialTransport.open already raises an actionable, user-facing message;
+            # use it as-is rather than wrapping it in another generic prefix.
+            self._emit(self._status_record(str(exc), connection_error=True))
             self._running = False
             return
         try:

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-STX = b"K2"
+STX = b"K"
 ETX = b"\r\n"
 
 
@@ -104,7 +104,7 @@ def parse_frame(raw: bytes) -> ParsedFrame:
     raw_hex = raw.hex(" ")
 
     if not raw.startswith(STX):
-        errors.append("Sai STX (không bắt đầu bằng 'K2')")
+        errors.append(f"Sai STX (không bắt đầu bằng {STX.decode('ascii')!r})")
         return ParsedFrame(raw_hex, None, 0, None, None, False, 0, {}, errors)
 
     if not raw.endswith(ETX):
@@ -112,14 +112,16 @@ def parse_frame(raw: bytes) -> ParsedFrame:
 
     body = raw[:-2] if raw.endswith(ETX) else raw  # strip CR LF for indexing
 
-    # LEN = 3 ascii digits after STX
+    # LEN = 3 ascii digits right after STX (offset = STX length, so STX may be
+    # 'K' or 'K2' without touching the rest of the parser).
+    len_start = len(STX)
     try:
-        len_recv = int(body[2:5].decode("ascii"))
+        len_recv = int(body[len_start:len_start + 3].decode("ascii"))
     except (ValueError, UnicodeDecodeError):
         errors.append("LEN không hợp lệ (3 chữ số)")
         return ParsedFrame(raw_hex, None, 0, None, None, False, 0, {}, errors)
 
-    res_start = 5
+    res_start = len_start + 3
     res_end = res_start + len_recv
     res_data = body[res_start:res_end]
     if len(res_data) != len_recv:
