@@ -13,6 +13,7 @@
     <DockPanel Margin="0,40,0,0">
         <ui:TitleBar Title="DBB-27 Serial Test Tool" DockPanel.Dock="Top" Margin="0,-40,0,0" />
         <views:ConnectionBar DockPanel.Dock="Top" Margin="8" />
+        <views:MockControls DockPanel.Dock="Top" Margin="8" />
         <views:AlarmPanel DockPanel.Dock="Top" Margin="8" />
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel>

@@ -7,6 +7,7 @@ using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Dbb27.Core.Logging;
+using Dbb27.Core.Mock;
 using Dbb27.Core.Models;
 using Dbb27.Core.Polling;
 using Dbb27.Core.Protocol;
@@ -30,6 +31,14 @@ public partial class MainViewModel : ObservableObject
 
     public ObservableCollection<string> AvailablePorts { get; } = new();
     public ObservableCollection<string> LogLines { get; } = new();
+    public ObservableCollection<AlarmChipViewModel> MockAlarmToggles { get; } = new();
+    public IReadOnlyList<string> Scenarios => MockFrameGenerator.Scenarios;
+
+    [ObservableProperty]
+    private string _selectedScenario = "normal";
+
+    [ObservableProperty]
+    private double _faultRatePercent;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ConnectCommand))]
@@ -90,13 +99,19 @@ public partial class MainViewModel : ObservableObject
         {
             AvailablePorts.Add(port);
         }
+        foreach (char id in AlarmOrderIds)
+        {
+            Field field = FieldRegistry.ById[id];
+            MockAlarmToggles.Add(new AlarmChipViewModel(field.Key, field.NameVi));
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanConnect))]
     private void Connect()
     {
         ITransport transport = UseMockSource
-            ? new MockTransport("normal")
+            ? new MockTransport(SelectedScenario, FaultRatePercent / 100.0,
+                MockAlarmToggles.Where(a => a.IsActive).Select(a => a.Key).ToList())
             : new SerialTransport(SelectedPort!);
 
         _poller = new FramePoller(transport, _logger, UseMockSource ? "mock" : "serial", OnResult);
