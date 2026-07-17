@@ -7,7 +7,7 @@
         xmlns:views="clr-namespace:Dbb27.App.Views"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         mc:Ignorable="d"
-        Title="DBB-27 Serial Test Tool" Height="720" Width="1100"
+        Title="DBB-27 Serial Test Tool" Height="760" Width="1100"
         ExtendsContentIntoTitleBar="True"
         WindowBackdropType="Mica">
     <DockPanel Margin="0,40,0,0">
@@ -17,11 +17,17 @@
         <views:AlarmPanel DockPanel.Dock="Top" Margin="8" />
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel>
-                <views:MeasurementGrid Margin="8" />
-                <StackPanel Orientation="Horizontal" Margin="8">
-                    <views:TreatmentBlock Width="260" Margin="0,0,8,0" />
-                    <views:BloodPressureBlock Width="260" />
-                </StackPanel>
+                <Grid Margin="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="260" />
+                    </Grid.ColumnDefinitions>
+                    <views:MeasurementGrid Grid.Column="0" />
+                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                        <views:TreatmentBlock Margin="0,0,0,8" />
+                        <views:BloodPressureBlock />
+                    </StackPanel>
+                </Grid>
                 <views:RawDebugPanel Margin="8" />
                 <views:LogPanel Margin="8" />
             </StackPanel>
