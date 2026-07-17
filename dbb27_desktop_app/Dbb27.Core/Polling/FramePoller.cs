@@ -45,16 +45,16 @@ public sealed class FramePoller
         _running = true;
         try
         {
-            _transport.Open();
-        }
-        catch (Exception exc)
-        {
-            Emit(StatusResult(exc.Message, connectionError: true));
-            _running = false;
-            return;
-        }
-        try
-        {
+            try
+            {
+                _transport.Open();
+            }
+            catch (Exception exc)
+            {
+                Emit(StatusResult(exc.Message, connectionError: true));
+                _running = false;
+                return;
+            }
             while (_running)
             {
                 byte[] raw = ReadWithRetry();
