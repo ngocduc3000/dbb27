@@ -30,6 +30,8 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<string> AvailablePorts { get; } = new();
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ConnectCommand))]
+    [NotifyCanExecuteChangedFor(nameof(DisconnectCommand))]
     private bool _isConnected;
 
     [ObservableProperty]
@@ -39,9 +41,11 @@ public partial class MainViewModel : ObservableObject
     private string _connectionStatusText = "Chưa kết nối";
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ConnectCommand))]
     private bool _useMockSource;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ConnectCommand))]
     private string? _selectedPort;
 
     [ObservableProperty]
