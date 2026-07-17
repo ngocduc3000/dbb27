@@ -15,7 +15,13 @@
         <views:ConnectionBar DockPanel.Dock="Top" Margin="8" />
         <views:AlarmPanel DockPanel.Dock="Top" Margin="8" />
         <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <views:MeasurementGrid Margin="8" />
+            <StackPanel>
+                <views:MeasurementGrid Margin="8" />
+                <StackPanel Orientation="Horizontal" Margin="8">
+                    <views:TreatmentBlock Width="260" Margin="0,0,8,0" />
+                    <views:BloodPressureBlock Width="260" />
+                </StackPanel>
+            </StackPanel>
         </ScrollViewer>
     </DockPanel>
 </ui:FluentWindow>

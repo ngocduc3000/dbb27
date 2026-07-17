@@ -51,6 +51,15 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _framesCounterText = "0 tổng · 0 lỗi";
 
+    [ObservableProperty]
+    private string _underTreatmentText = "--";
+
+    [ObservableProperty]
+    private string _treatmentModeText = "--";
+
+    [ObservableProperty]
+    private string _bpText = "-- / -- mmHg  Mạch --";
+
     public MainViewModel()
     {
         foreach (char id in MeasurementIds)
@@ -106,6 +115,9 @@ public partial class MainViewModel : ObservableObject
         {
             chip.IsActive = false;
         }
+        UnderTreatmentText = "--";
+        TreatmentModeText = "--";
+        BpText = "-- / -- mmHg  Mạch --";
     }
 
     private void OnResult(PollResult result)
@@ -130,6 +142,7 @@ public partial class MainViewModel : ObservableObject
 
         UpdateMeasurements(result.Decoded);
         UpdateAlarms(result.Decoded);
+        UpdateTreatmentAndBp(result.Decoded);
     }
 
     private void UpdateMeasurements(IReadOnlyDictionary<string, object?> decoded)
@@ -155,5 +168,21 @@ public partial class MainViewModel : ObservableObject
                 chip.IsActive = b;
             }
         }
+    }
+
+    private void UpdateTreatmentAndBp(IReadOnlyDictionary<string, object?> decoded)
+    {
+        if (decoded.TryGetValue("under_treatment", out object? under) && under is bool u)
+        {
+            UnderTreatmentText = u ? "Đang điều trị" : "Không điều trị";
+        }
+        if (decoded.TryGetValue("treatment_mode", out object? mode) && mode is bool ecum)
+        {
+            TreatmentModeText = ecum ? "ECUM" : "HD";
+        }
+        decoded.TryGetValue("bp_systolic", out object? sys);
+        decoded.TryGetValue("bp_diastolic", out object? dia);
+        decoded.TryGetValue("bp_pulse", out object? pulse);
+        BpText = $"{sys as double? ?? 0:0} / {dia as double? ?? 0:0} mmHg  Mạch {pulse as double? ?? 0:0}";
     }
 }
