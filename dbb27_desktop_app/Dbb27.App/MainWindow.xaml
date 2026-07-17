@@ -4,12 +4,17 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Dbb27.App"
+        xmlns:views="clr-namespace:Dbb27.App.Views"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         mc:Ignorable="d"
         Title="DBB-27 Serial Test Tool" Height="720" Width="1100"
         ExtendsContentIntoTitleBar="True"
         WindowBackdropType="Mica">
-    <Grid Margin="0,40,0,0">
-        <ui:TitleBar Title="DBB-27 Serial Test Tool" VerticalAlignment="Top" Margin="0,-40,0,0" />
-    </Grid>
+    <DockPanel Margin="0,40,0,0">
+        <ui:TitleBar Title="DBB-27 Serial Test Tool" DockPanel.Dock="Top" Margin="0,-40,0,0" />
+        <views:AlarmPanel DockPanel.Dock="Top" Margin="8" />
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <views:MeasurementGrid Margin="8" />
+        </ScrollViewer>
+    </DockPanel>
 </ui:FluentWindow>

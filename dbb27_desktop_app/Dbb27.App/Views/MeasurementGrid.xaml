@@ -1,0 +1,35 @@
+<UserControl x:Class="Dbb27.App.Views.MeasurementGrid"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Dbb27.App.ViewModels"
+             xmlns:conv="clr-namespace:Dbb27.App.Converters"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <conv:BoolToOutOfRangeBrushConverter x:Key="OutOfRangeBrush" />
+    </UserControl.Resources>
+    <ItemsControl ItemsSource="{Binding Measurements}">
+        <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+                <UniformGrid Columns="4" />
+            </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="{x:Type vm:MeasurementTileViewModel}">
+                <Border Margin="4" Padding="10" CornerRadius="6"
+                        Background="{DynamicResource ControlFillColorDefaultBrush}"
+                        BorderThickness="2"
+                        BorderBrush="{Binding IsOutOfRange, Converter={StaticResource OutOfRangeBrush}}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding Label}" FontSize="12" Opacity="0.7" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Value}" FontSize="22" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding Unit}" FontSize="12" Margin="4,0,0,4" VerticalAlignment="Bottom" Opacity="0.7" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </DataTemplate>
+        </ItemsControl.ItemTemplate>
+    </ItemsControl>
+</UserControl>

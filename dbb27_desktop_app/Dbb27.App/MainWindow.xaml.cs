@@ -8,6 +8,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Wpf.Ui.Controls;
+using Dbb27.App.ViewModels;
 
 namespace Dbb27.App;
 
@@ -19,5 +20,6 @@ public partial class MainWindow : FluentWindow
     public MainWindow()
     {
         InitializeComponent();
+        DataContext = new MainViewModel();
     }
 }
