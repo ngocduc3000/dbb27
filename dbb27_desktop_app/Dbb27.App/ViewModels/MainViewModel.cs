@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Ports;
 using System.Windows;
@@ -28,6 +29,7 @@ public partial class MainViewModel : ObservableObject
     private FramePoller? _poller;
 
     public ObservableCollection<string> AvailablePorts { get; } = new();
+    public ObservableCollection<string> LogLines { get; } = new();
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ConnectCommand))]
@@ -116,6 +118,14 @@ public partial class MainViewModel : ObservableObject
         ResetMeasurementsToPlaceholder();
     }
 
+    [RelayCommand]
+    private void OpenLogFolder()
+    {
+        string dir = Path.GetDirectoryName(_logger.CurrentPath())!;
+        Directory.CreateDirectory(dir);
+        Process.Start(new ProcessStartInfo(dir) { UseShellExecute = true });
+    }
+
     private void ResetMeasurementsToPlaceholder()
     {
         foreach (MeasurementTileViewModel tile in Measurements)
@@ -150,6 +160,7 @@ public partial class MainViewModel : ObservableObject
         }
 
         FramesCounterText = $"{result.FramesTotal} tổng · {result.FramesError} lỗi";
+        LogLines.Add($"{result.Ts}  {(result.Ok ? "OK" : "LỖI")}  {result.Error}");
 
         if (!result.Ok)
         {
