@@ -177,6 +177,11 @@ public partial class MainViewModel : ObservableObject
         FramesCounterText = $"{result.FramesTotal} tổng · {result.FramesError} lỗi";
         LogLines.Add($"{result.Ts}  {(result.Ok ? "OK" : "LỖI")}  {result.Error}");
 
+        RawHex = result.RawHex;
+        LenText = $"{result.LenRecv?.ToString() ?? "?"} / {result.LenCalc}";
+        ChecksumText = $"nhận {result.ChecksumRecv ?? "?"} / tính {result.ChecksumCalc ?? "?"}";
+        FieldCountText = $"{result.FieldCount}/31";
+
         if (!result.Ok)
         {
             return;
@@ -185,10 +190,6 @@ public partial class MainViewModel : ObservableObject
         UpdateMeasurements(result.Decoded);
         UpdateAlarms(result.Decoded);
         UpdateTreatmentAndBp(result.Decoded);
-        RawHex = result.RawHex;
-        LenText = $"{result.LenRecv?.ToString() ?? "?"} / {result.LenCalc}";
-        ChecksumText = $"nhận {result.ChecksumRecv ?? "?"} / tính {result.ChecksumCalc ?? "?"}";
-        FieldCountText = $"{result.FieldCount}/31";
     }
 
     private void UpdateMeasurements(IReadOnlyDictionary<string, object?> decoded)

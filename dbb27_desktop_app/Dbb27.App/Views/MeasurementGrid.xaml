@@ -9,27 +9,31 @@
     <UserControl.Resources>
         <conv:BoolToOutOfRangeBrushConverter x:Key="OutOfRangeBrush" />
     </UserControl.Resources>
-    <ItemsControl ItemsSource="{Binding Measurements}">
-        <ItemsControl.ItemsPanel>
-            <ItemsPanelTemplate>
-                <UniformGrid Columns="4" />
-            </ItemsPanelTemplate>
-        </ItemsControl.ItemsPanel>
-        <ItemsControl.ItemTemplate>
-            <DataTemplate DataType="{x:Type vm:MeasurementTileViewModel}">
-                <Border Margin="4" Padding="10" CornerRadius="6"
-                        Background="{DynamicResource ControlFillColorDefaultBrush}"
-                        BorderThickness="2"
-                        BorderBrush="{Binding IsOutOfRange, Converter={StaticResource OutOfRangeBrush}}">
-                    <StackPanel>
-                        <TextBlock Text="{Binding Label}" FontSize="12" Opacity="0.7" />
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Value}" FontSize="22" FontWeight="SemiBold" />
-                            <TextBlock Text="{Binding Unit}" FontSize="12" Margin="4,0,0,4" VerticalAlignment="Bottom" Opacity="0.7" />
+    <StackPanel>
+        <TextBlock Text="Viền vàng = ngoài khoảng tham khảo lâm sàng, KHÔNG phải cảnh báo chính thức của máy"
+                   FontSize="11" Opacity="0.7" Margin="4,0,4,4" TextWrapping="Wrap" />
+        <ItemsControl ItemsSource="{Binding Measurements}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="4" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="{x:Type vm:MeasurementTileViewModel}">
+                    <Border Margin="4" Padding="10" CornerRadius="6"
+                            Background="{DynamicResource ControlFillColorDefaultBrush}"
+                            BorderThickness="2"
+                            BorderBrush="{Binding IsOutOfRange, Converter={StaticResource OutOfRangeBrush}}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding Label}" FontSize="12" Opacity="0.7" />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Value}" FontSize="22" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding Unit}" FontSize="12" Margin="4,0,0,4" VerticalAlignment="Bottom" Opacity="0.7" />
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
-                </Border>
-            </DataTemplate>
-        </ItemsControl.ItemTemplate>
-    </ItemsControl>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </StackPanel>
 </UserControl>
