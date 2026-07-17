@@ -1,0 +1,12 @@
+D:\Du_lieu_ca_nhan\dbb27\.claude\worktrees\dbb27-wpf-desktop-app\dbb27_desktop_app\Dbb27.Core\bin\net8.0\Debug\net8.0\Dbb27.Core.deps.json
+D:\Du_lieu_ca_nhan\dbb27\.claude\worktrees\dbb27-wpf-desktop-app\dbb27_desktop_app\Dbb27.Core\bin\net8.0\Debug\net8.0\Dbb27.Core.dll
+D:\Du_lieu_ca_nhan\dbb27\.claude\worktrees\dbb27-wpf-desktop-app\dbb27_desktop_app\Dbb27.Core\bin\net8.0\Debug\net8.0\Dbb27.Core.pdb
+D:\Du_lieu_ca_nhan\dbb27\.claude\worktrees\dbb27-wpf-desktop-app\dbb27_desktop_app\Dbb27.Core\obj\net8.0\Debug\net8.0\Dbb27.Core.csproj.AssemblyReference.cache
+D:\Du_lieu_ca_nhan\dbb27\.claude\worktrees\dbb27-wpf-desktop-app\dbb27_desktop_app\Dbb27.Core\obj\net8.0\Debug\net8.0\Dbb27.Core.GeneratedMSBuildEditorConfig.editorconfig
+D:\Du_lieu_ca_nhan\dbb27\.claude\worktrees\dbb27-wpf-desktop-app\dbb27_desktop_app\Dbb27.Core\obj\net8.0\Debug\net8.0\Dbb27.Core.AssemblyInfoInputs.cache
+D:\Du_lieu_ca_nhan\dbb27\.claude\worktrees\dbb27-wpf-desktop-app\dbb27_desktop_app\Dbb27.Core\obj\net8.0\Debug\net8.0\Dbb27.Core.AssemblyInfo.cs
+D:\Du_lieu_ca_nhan\dbb27\.claude\worktrees\dbb27-wpf-desktop-app\dbb27_desktop_app\Dbb27.Core\obj\net8.0\Debug\net8.0\Dbb27.Core.csproj.CoreCompileInputs.cache
+D:\Du_lieu_ca_nhan\dbb27\.claude\worktrees\dbb27-wpf-desktop-app\dbb27_desktop_app\Dbb27.Core\obj\net8.0\Debug\net8.0\Dbb27.Core.dll
+D:\Du_lieu_ca_nhan\dbb27\.claude\worktrees\dbb27-wpf-desktop-app\dbb27_desktop_app\Dbb27.Core\obj\net8.0\Debug\net8.0\refint\Dbb27.Core.dll
+D:\Du_lieu_ca_nhan\dbb27\.claude\worktrees\dbb27-wpf-desktop-app\dbb27_desktop_app\Dbb27.Core\obj\net8.0\Debug\net8.0\Dbb27.Core.pdb
+D:\Du_lieu_ca_nhan\dbb27\.claude\worktrees\dbb27-wpf-desktop-app\dbb27_desktop_app\Dbb27.Core\obj\net8.0\Debug\net8.0\ref\Dbb27.Core.dll
