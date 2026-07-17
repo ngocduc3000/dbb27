@@ -60,6 +60,18 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _bpText = "-- / -- mmHg  Mạch --";
 
+    [ObservableProperty]
+    private string _rawHex = "";
+
+    [ObservableProperty]
+    private string _lenText = "--";
+
+    [ObservableProperty]
+    private string _checksumText = "--";
+
+    [ObservableProperty]
+    private string _fieldCountText = "--/31";
+
     public MainViewModel()
     {
         foreach (char id in MeasurementIds)
@@ -118,6 +130,10 @@ public partial class MainViewModel : ObservableObject
         UnderTreatmentText = "--";
         TreatmentModeText = "--";
         BpText = "-- / -- mmHg  Mạch --";
+        RawHex = "";
+        LenText = "--";
+        ChecksumText = "--";
+        FieldCountText = "--/31";
     }
 
     private void OnResult(PollResult result)
@@ -143,6 +159,10 @@ public partial class MainViewModel : ObservableObject
         UpdateMeasurements(result.Decoded);
         UpdateAlarms(result.Decoded);
         UpdateTreatmentAndBp(result.Decoded);
+        RawHex = result.RawHex;
+        LenText = $"{result.LenRecv?.ToString() ?? "?"} / {result.LenCalc}";
+        ChecksumText = $"nhận {result.ChecksumRecv ?? "?"} / tính {result.ChecksumCalc ?? "?"}";
+        FieldCountText = $"{result.FieldCount}/31";
     }
 
     private void UpdateMeasurements(IReadOnlyDictionary<string, object?> decoded)

@@ -21,6 +21,7 @@
                     <views:TreatmentBlock Width="260" Margin="0,0,8,0" />
                     <views:BloodPressureBlock Width="260" />
                 </StackPanel>
+                <views:RawDebugPanel Margin="8" />
             </StackPanel>
         </ScrollViewer>
     </DockPanel>
