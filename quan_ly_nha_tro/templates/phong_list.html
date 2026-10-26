@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Phòng</h1>
+<div class="actions"><a class="btn" href="{{ url_for('phong_form') }}">+ Thêm phòng</a></div>
+<div class="scroll"><table>
+  <tr><th>Số phòng</th><th>Tầng</th><th class="num">Diện tích</th><th class="num">Giá tháng</th><th class="num">Giá ngày</th><th>Người ở</th><th>Ghi chú</th><th></th></tr>
+  {% for p in phongs %}
+  <tr>
+    <td><a href="{{ url_for('phong_detail', pid=p.id) }}"><b>{{ p.so_phong }}</b></a></td>
+    <td>{{ p.tang }}</td>
+    <td class="num">{{ p.dien_tich }} m²</td>
+    <td class="num">{{ p.gia_thang|vnd }}</td>
+    <td class="num">{{ p.gia_ngay|vnd }}</td>
+    <td>{% if p.so_nguoi_o %}<span class="tag ok">{{ p.so_nguoi_o }}/{{ p.so_nguoi_toi_da }}</span>{% else %}<span class="tag free">Trống</span>{% endif %}</td>
+    <td>{{ p.ghi_chu }}</td>
+    <td><a href="{{ url_for('phong_form', pid=p.id) }}">Sửa</a></td>
+  </tr>
+  {% else %}<tr><td colspan="8" class="muted">Chưa có phòng</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

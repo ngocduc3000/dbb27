@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Tổng quan</h1>
+{% set dang_o = phongs|selectattr('so_nguoi_o')|list|length %}
+<div class="grid">
+  <div class="card stat"><span class="muted">Tổng số phòng</span><b>{{ phongs|length }}</b></div>
+  <div class="card stat"><span class="muted">Phòng đang có người</span><b>{{ dang_o }}</b></div>
+  <div class="card stat"><span class="muted">Phòng trống</span><b>{{ phongs|length - dang_o }}</b></div>
+  <div class="card stat"><span class="muted">Hóa đơn chưa thu</span><b>{{ no.so }} · {{ no.tien|vnd }} đ</b></div>
+  <div class="card stat"><span class="muted">Đã thu tháng {{ thang }}</span><b>{{ thu|vnd }} đ</b></div>
+</div>
+<h2>Sơ đồ phòng</h2>
+<div class="grid">
+  {% for p in phongs %}
+  <a class="card" style="text-decoration:none;color:inherit" href="{{ url_for('phong_detail', pid=p.id) }}">
+    <b>Phòng {{ p.so_phong }}</b> <span class="muted">· Tầng {{ p.tang }}</span><br>
+    {% if p.so_nguoi_o %}<span class="tag ok">{{ p.so_nguoi_o }}/{{ p.so_nguoi_toi_da }} người</span>
+    {% else %}<span class="tag free">Trống</span>{% endif %}
+    <div class="muted" style="margin-top:6px">{{ p.gia_thang|vnd }} đ/tháng · {{ p.gia_ngay|vnd }} đ/ngày</div>
+  </a>
+  {% else %}
+  <p class="muted">Chưa có phòng. <a href="{{ url_for('phong_form') }}">Thêm phòng</a></p>
+  {% endfor %}
+</div>
+{% endblock %}

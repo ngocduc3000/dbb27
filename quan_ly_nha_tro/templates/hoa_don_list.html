@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Hóa đơn</h1>
+<form class="actions" method="get">
+  <label>Tháng (theo ngày kết thúc)<input type="month" name="thang" value="{{ thang }}"></label>
+  <label>Trạng thái<select name="trang_thai">
+    <option value="">Tất cả</option>
+    <option value="0" {{ 'selected' if trang_thai=='0' }}>Chưa thu</option>
+    <option value="1" {{ 'selected' if trang_thai=='1' }}>Đã thu</option>
+  </select></label>
+  <button class="sec">Lọc</button>
+  <a class="btn" href="{{ url_for('hoa_don_tao') }}">+ Tạo hóa đơn</a>
+</form>
+{% set show_phong = true %}
+{% include "_hoa_don_table.html" %}
+<p><b>Tổng cộng: {{ tong|vnd }} đ</b> ({{ rows|length }} hóa đơn)</p>
+{% endblock %}

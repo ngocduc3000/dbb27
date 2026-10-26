@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ 'Sửa người thuê' if nguoi else 'Thêm người thuê' }}</h1>
+<div class="card">
+<form method="post" class="f">
+  {% set chon = nguoi.phong_id if nguoi else phong_id %}
+  <label>Phòng *<select name="phong_id" required>
+    <option value="">-- Chọn phòng --</option>
+    {% for p in phongs %}<option value="{{ p.id }}" {{ 'selected' if p.id == chon }}>{{ p.so_phong }} ({{ p.so_nguoi_o }}/{{ p.so_nguoi_toi_da }})</option>{% endfor %}
+  </select></label>
+  <label>Họ tên *<input name="ho_ten" required value="{{ nguoi.ho_ten if nguoi }}"></label>
+  <label>CCCD<input name="cccd" value="{{ nguoi.cccd if nguoi }}"></label>
+  <label>Số điện thoại<input name="sdt" value="{{ nguoi.sdt if nguoi }}"></label>
+  <label>Ngày sinh<input type="date" name="ngay_sinh" value="{{ nguoi.ngay_sinh if nguoi }}"></label>
+  <label>Quê quán<input name="que_quan" value="{{ nguoi.que_quan if nguoi }}"></label>
+  <label>Ngày vào *<input type="date" name="ngay_vao" required value="{{ nguoi.ngay_vao if nguoi else today }}"></label>
+  <label>Ngày ra (trống = đang ở)<input type="date" name="ngay_ra" value="{{ nguoi.ngay_ra or '' if nguoi }}"></label>
+  <label style="grid-column:1/-1">Ghi chú<input name="ghi_chu" value="{{ nguoi.ghi_chu if nguoi }}"></label>
+  <div><button>Lưu</button></div>
+</form>
+</div>
+{% endblock %}

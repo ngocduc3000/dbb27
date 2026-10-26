@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Phòng {{ phong.so_phong }} <span class="muted" style="font-size:15px">· Tầng {{ phong.tang }} · {{ phong.dien_tich }} m² · {{ phong.gia_thang|vnd }} đ/tháng · {{ phong.gia_ngay|vnd }} đ/ngày</span></h1>
+<div class="actions">
+  <a class="btn sec" href="{{ url_for('phong_form', pid=phong.id) }}">Sửa phòng</a>
+  <a class="btn sec" href="{{ url_for('nguoi_form', phong_id=phong.id) }}">+ Thêm người ở</a>
+  <a class="btn" href="{{ url_for('hoa_don_tao', phong_id=phong.id) }}">Tạo hóa đơn</a>
+</div>
+
+<h2>Người ở trọ</h2>
+<div class="scroll"><table>
+  <tr><th>Họ tên</th><th>CCCD</th><th>SĐT</th><th>Ngày sinh</th><th>Quê quán</th><th>Ngày vào</th><th>Ngày ra</th><th></th></tr>
+  {% for n in nguoi %}
+  <tr>
+    <td>{{ n.ho_ten }}</td><td>{{ n.cccd }}</td><td>{{ n.sdt }}</td><td>{{ n.ngay_sinh }}</td><td>{{ n.que_quan }}</td>
+    <td>{{ n.ngay_vao }}</td>
+    <td>{% if n.ngay_ra %}{{ n.ngay_ra }}{% else %}<span class="tag ok">Đang ở</span>{% endif %}</td>
+    <td>
+      <a href="{{ url_for('nguoi_form', nid=n.id) }}">Sửa</a>
+      {% if not n.ngay_ra %}
+      <form method="post" action="{{ url_for('nguoi_tra_phong', nid=n.id) }}" class="inline">
+        <input type="date" name="ngay_ra" value="{{ today }}" required> <button class="sec">Trả phòng</button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% else %}<tr><td colspan="8" class="muted">Chưa có người ở</td></tr>{% endfor %}
+</table></div>
+
+<h2>Ghi chỉ số điện nước</h2>
+<div class="card">
+<form method="post" action="{{ url_for('chi_so') }}" class="f">
+  <input type="hidden" name="phong_id" value="{{ phong.id }}">
+  <input type="hidden" name="next" value="{{ url_for('phong_detail', pid=phong.id) }}">
+  <label>Ngày ghi<input type="date" name="ngay_ghi" value="{{ today }}" required></label>
+  <label>Chỉ số điện (kWh)<input type="number" name="dien" min="0" required></label>
+  <label>Chỉ số nước (m³)<input type="number" name="nuoc" min="0" required></label>
+  <div style="align-self:end"><button>Ghi</button></div>
+</form>
+</div>
+<div class="scroll"><table>
+  <tr><th>Ngày ghi</th><th class="num">Điện</th><th class="num">Nước</th></tr>
+  {% for c in chi_so %}<tr><td>{{ c.ngay_ghi }}</td><td class="num">{{ c.dien }}</td><td class="num">{{ c.nuoc }}</td></tr>
+  {% else %}<tr><td colspan="3" class="muted">Chưa có chỉ số</td></tr>{% endfor %}
+</table></div>
+
+<h2>Hóa đơn</h2>
+{% include "_hoa_don_table.html" %}
+{% endblock %}

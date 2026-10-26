@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Tạo hóa đơn</h1>
+<div class="card">
+<p class="muted">Bước 1: chọn phòng, loại và kỳ → bấm "Lấy chỉ số" để điền sẵn chỉ số cũ/mới từ dữ liệu đã ghi.
+Đơn giá hiện tại: điện {{ gia_dien|vnd }} đ/kWh, nước {{ gia_nuoc|vnd }} đ/m³.</p>
+<form method="get" class="f">
+  <label>Phòng<select name="phong_id" required>
+    <option value="">-- Chọn phòng --</option>
+    {% for p in phongs %}<option value="{{ p.id }}" {{ 'selected' if p.id == phong_id }}>{{ p.so_phong }} — {{ p.gia_thang|vnd }}/tháng, {{ p.gia_ngay|vnd }}/ngày</option>{% endfor %}
+  </select></label>
+  <label>Loại<select name="loai">
+    <option value="thang" {{ 'selected' if loai=='thang' }}>Theo tháng</option>
+    <option value="ngay" {{ 'selected' if loai=='ngay' }}>Theo ngày</option>
+  </select></label>
+  <label>Từ ngày<input type="date" name="tu_ngay" value="{{ tu }}" required></label>
+  <label>Đến ngày<input type="date" name="den_ngay" value="{{ den }}" required></label>
+  <div style="align-self:end"><button class="sec">Lấy chỉ số</button></div>
+</form>
+</div>
+
+{% if phong_id %}
+<div class="card">
+<p class="muted">Bước 2: kiểm tra chỉ số, nhập phí khác (nếu có) → Tạo hóa đơn.</p>
+<form method="post" class="f">
+  <input type="hidden" name="phong_id" value="{{ phong_id }}">
+  <input type="hidden" name="loai" value="{{ loai }}">
+  <input type="hidden" name="tu_ngay" value="{{ tu }}">
+  <input type="hidden" name="den_ngay" value="{{ den }}">
+  <label>Điện cũ<input type="number" name="dien_cu" min="0" required value="{{ goi_y.dien_cu }}"></label>
+  <label>Điện mới<input type="number" name="dien_moi" min="0" required value="{{ goi_y.dien_moi }}"></label>
+  <label>Nước cũ<input type="number" name="nuoc_cu" min="0" required value="{{ goi_y.nuoc_cu }}"></label>
+  <label>Nước mới<input type="number" name="nuoc_moi" min="0" required value="{{ goi_y.nuoc_moi }}"></label>
+  <label>Phí khác (rác, wifi, gửi xe...)<input type="number" name="phi_khac" min="0" value="0"></label>
+  <label>Ghi chú<input name="ghi_chu"></label>
+  <div style="align-self:end"><button>Tạo hóa đơn</button></div>
+</form>
+</div>
+{% endif %}
+{% endblock %}

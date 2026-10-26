@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width:640px">
+  <h1 style="text-align:center">HÓA ĐƠN TIỀN PHÒNG</h1>
+  <p style="text-align:center">Phòng <b>{{ h.so_phong }}</b> · {{ 'Theo tháng' if h.loai=='thang' else 'Theo ngày' }} · Từ {{ h.tu_ngay }} đến {{ h.den_ngay }}</p>
+  <table>
+    <tr><th>Khoản</th><th>Chi tiết</th><th class="num">Thành tiền (đ)</th></tr>
+    <tr><td>Tiền phòng</td><td>{{ '1 tháng' if h.loai=='thang' else h.so_ngay ~ ' ngày' }}</td><td class="num">{{ h.tien_phong|vnd }}</td></tr>
+    <tr><td>Tiền điện</td><td>{{ h.dien_cu }} → {{ h.dien_moi }} = {{ h.dien_moi - h.dien_cu }} kWh × {{ h.don_gia_dien|vnd }}</td><td class="num">{{ h.tien_dien|vnd }}</td></tr>
+    <tr><td>Tiền nước</td><td>{{ h.nuoc_cu }} → {{ h.nuoc_moi }} = {{ h.nuoc_moi - h.nuoc_cu }} m³ × {{ h.don_gia_nuoc|vnd }}</td><td class="num">{{ h.tien_nuoc|vnd }}</td></tr>
+    <tr><td>Phí khác</td><td>{{ h.ghi_chu }}</td><td class="num">{{ h.phi_khac|vnd }}</td></tr>
+    <tr><th colspan="2">TỔNG CỘNG</th><th class="num">{{ h.tong|vnd }}</th></tr>
+  </table>
+  <p>Trạng thái: {% if h.da_thanh_toan %}<span class="tag ok">Đã thanh toán ngày {{ h.ngay_thanh_toan }}</span>{% else %}<span class="tag no">Chưa thanh toán</span>{% endif %}</p>
+</div>
+<div class="actions noprint">
+  {% if h.da_thanh_toan %}
+  <form method="post" action="{{ url_for('hoa_don_thanh_toan', hid=h.id) }}"><input type="hidden" name="huy" value="1"><button class="sec">Hủy thanh toán</button></form>
+  {% else %}
+  <form method="post" action="{{ url_for('hoa_don_thanh_toan', hid=h.id) }}" class="actions" style="margin:0">
+    <input type="date" name="ngay_thanh_toan" value="{{ today }}" required><button>Xác nhận đã thu</button>
+  </form>
+  {% endif %}
+  <button class="sec" onclick="window.print()">In hóa đơn</button>
+  <a class="btn sec" href="{{ url_for('phong_detail', pid=h.phong_id) }}">Về phòng</a>
+  <form method="post" action="{{ url_for('hoa_don_xoa', hid=h.id) }}" onsubmit="return confirm('Xóa hóa đơn này?')"><button class="del">Xóa</button></form>
+</div>
+{% endblock %}

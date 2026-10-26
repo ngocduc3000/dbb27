@@ -1,0 +1,16 @@
+<div class="scroll"><table>
+  <tr>{% if show_phong %}<th>Phòng</th>{% endif %}<th>Loại</th><th>Kỳ</th><th class="num">Tiền phòng</th><th class="num">Điện</th><th class="num">Nước</th><th class="num">Phí khác</th><th class="num">Tổng</th><th>Trạng thái</th></tr>
+  {% for h in (rows if rows is defined else hoa_don) %}
+  <tr>
+    {% if show_phong %}<td>{{ h.so_phong }}</td>{% endif %}
+    <td>{{ 'Tháng' if h.loai == 'thang' else 'Ngày (' ~ h.so_ngay ~ ')' }}</td>
+    <td><a href="{{ url_for('hoa_don_xem', hid=h.id) }}">{{ h.tu_ngay }} → {{ h.den_ngay }}</a></td>
+    <td class="num">{{ h.tien_phong|vnd }}</td>
+    <td class="num">{{ h.tien_dien|vnd }}</td>
+    <td class="num">{{ h.tien_nuoc|vnd }}</td>
+    <td class="num">{{ h.phi_khac|vnd }}</td>
+    <td class="num"><b>{{ h.tong|vnd }}</b></td>
+    <td>{% if h.da_thanh_toan %}<span class="tag ok">Đã thu {{ h.ngay_thanh_toan }}</span>{% else %}<span class="tag no">Chưa thu</span>{% endif %}</td>
+  </tr>
+  {% else %}<tr><td colspan="9" class="muted">Chưa có hóa đơn</td></tr>{% endfor %}
+</table></div>

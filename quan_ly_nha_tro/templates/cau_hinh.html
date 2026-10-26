@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Đơn giá điện nước</h1>
+<div class="card" style="max-width:520px">
+<form method="post" class="f">
+  <label>Đơn giá điện (đ/kWh)<input type="number" name="don_gia_dien" min="0" value="{{ gia_dien }}" required></label>
+  <label>Đơn giá nước (đ/m³)<input type="number" name="don_gia_nuoc" min="0" value="{{ gia_nuoc }}" required></label>
+  <div><button>Lưu</button></div>
+</form>
+<p class="muted">Đơn giá được lưu cố định vào từng hóa đơn lúc tạo. Đổi đơn giá không làm thay đổi hóa đơn cũ.</p>
+</div>
+{% endblock %}

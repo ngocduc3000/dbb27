@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Người thuê</h1>
+<div class="actions">
+  <a class="btn" href="{{ url_for('nguoi_form') }}">+ Thêm người thuê</a>
+  {% if tat_ca %}<a class="btn sec" href="{{ url_for('nguoi_list') }}">Chỉ người đang ở</a>
+  {% else %}<a class="btn sec" href="{{ url_for('nguoi_list', tat_ca=1) }}">Xem cả người đã trả phòng</a>{% endif %}
+</div>
+<div class="scroll"><table>
+  <tr><th>Phòng</th><th>Họ tên</th><th>CCCD</th><th>SĐT</th><th>Ngày sinh</th><th>Quê quán</th><th>Ngày vào</th><th>Ngày ra</th><th></th></tr>
+  {% for n in nguoi %}
+  <tr>
+    <td><a href="{{ url_for('phong_detail', pid=n.phong_id) }}">{{ n.so_phong }}</a></td>
+    <td>{{ n.ho_ten }}</td><td>{{ n.cccd }}</td><td>{{ n.sdt }}</td><td>{{ n.ngay_sinh }}</td><td>{{ n.que_quan }}</td>
+    <td>{{ n.ngay_vao }}</td><td>{{ n.ngay_ra or '' }}</td>
+    <td><a href="{{ url_for('nguoi_form', nid=n.id) }}">Sửa</a></td>
+  </tr>
+  {% else %}<tr><td colspan="9" class="muted">Chưa có người thuê</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

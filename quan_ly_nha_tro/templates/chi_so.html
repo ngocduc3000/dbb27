@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Chỉ số điện nước</h1>
+<div class="card">
+<form method="post" class="f">
+  <label>Phòng<select name="phong_id" required>
+    <option value="">-- Chọn phòng --</option>
+    {% for p in phongs %}<option value="{{ p.id }}">{{ p.so_phong }}</option>{% endfor %}
+  </select></label>
+  <label>Ngày ghi<input type="date" name="ngay_ghi" value="{{ today }}" required></label>
+  <label>Chỉ số điện (kWh)<input type="number" name="dien" min="0" required></label>
+  <label>Chỉ số nước (m³)<input type="number" name="nuoc" min="0" required></label>
+  <div style="align-self:end"><button>Ghi chỉ số</button></div>
+</form>
+<p class="muted">Ghi lại cùng phòng, cùng ngày sẽ ghi đè lần trước.</p>
+</div>
+<div class="scroll"><table>
+  <tr><th>Ngày ghi</th><th>Phòng</th><th class="num">Điện (kWh)</th><th class="num">Nước (m³)</th></tr>
+  {% for c in rows %}<tr><td>{{ c.ngay_ghi }}</td><td><a href="{{ url_for('phong_detail', pid=c.phong_id) }}">{{ c.so_phong }}</a></td><td class="num">{{ c.dien }}</td><td class="num">{{ c.nuoc }}</td></tr>
+  {% else %}<tr><td colspan="4" class="muted">Chưa có dữ liệu</td></tr>{% endfor %}
+</table></div>
+{% endblock %}
